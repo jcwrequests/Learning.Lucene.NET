@@ -3,3 +3,4 @@ This is just a small project to learn about Lucene.NET and to see if can be adde
 Resources:
 
 http://darksleep.com/lucene/
+http://stackoverflow.com/questions/468405/how-to-incorporate-multiple-fields-in-queryparser

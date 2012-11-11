@@ -52,7 +52,7 @@
     <Compile Include="Contracts\CustomerCreated.cs" />
     <Compile Include="Contracts\CustomerId.cs" />
     <Compile Include="Contracts\Interfaces.cs" />
-    <Compile Include="Services\GoLucene.cs" />
+    <Compile Include="GoLucene.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Services\CustomerIndexProjection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

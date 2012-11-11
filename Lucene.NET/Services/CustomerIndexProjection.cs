@@ -17,6 +17,10 @@ namespace Lucene.NET.Services
 {
     public class CustomerIndexProjection
     {
+        StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_29);
+        IndexWriter writer;
+        System.Timers.Timer flush = new System.Timers.Timer(2000);
+      
         public static string _luceneDir =  @"..\..\Index";
         private static FSDirectory _directoryTemp;
         private static FSDirectory _directory
@@ -30,18 +34,44 @@ namespace Lucene.NET.Services
                 return _directoryTemp;
             }
         }
-
-        public void When(CustomerCreated e)
+        public CustomerIndexProjection()
         {
-            var analyzer = new StandardAnalyzer(Version.LUCENE_29);
-            using (var writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED))
-            {
-                _addToLuceneIndex(e, writer);
+            writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+            flush.Elapsed += flush_Elapsed;
+            flush.Start();
+        }
 
-                // close handles
+        void flush_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            lock (writer)
+            {
+                flush.Stop();
                 analyzer.Close();
                 writer.Close();
                 writer.Dispose();
+                analyzer = new StandardAnalyzer(Version.LUCENE_29);
+                writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+        
+                flush.Start();
+            }
+        }
+        public void When(CustomerCreated e)
+        {
+            //var analyzer = new StandardAnalyzer(Version.LUCENE_29);
+            //using (var writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED))
+            
+            {
+                //writer.SetMaxBufferedDocs(1000);
+                //writer.SetMaxMergeDocs(10000);
+                //writer.SetRAMBufferSizeMB(50);
+                lock (writer)
+                {
+                    _addToLuceneIndex(e, writer);
+                }
+                // close handles
+                //analyzer.Close();
+                //writer.Close();
+                //writer.Dispose();
             }
         }
         private static void _addToLuceneIndex(CustomerCreated e, IndexWriter writer)

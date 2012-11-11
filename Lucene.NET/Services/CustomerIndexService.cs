@@ -26,15 +26,15 @@ namespace Lucene.NET.Services
                 if (_directoryTemp == null) _directoryTemp = FSDirectory.Open(new DirectoryInfo(_luceneDir));
                 if (IndexWriter.IsLocked(_directoryTemp)) IndexWriter.Unlock(_directoryTemp);
                 var lockFilePath = Path.Combine(_luceneDir, "write.lock");
-                if (File.Exists(lockFilePath)) File.Delete(lockFilePath);
+                //if (File.Exists(lockFilePath)) File.Delete(lockFilePath);
                 return _directoryTemp;
             }
         }
         public CustomerId GetCustomerId(string userName)
         {
-            return _search(userName, "CustomerName").FirstOrDefault();
+            return _search(userName).FirstOrDefault();
         }
-        private static IEnumerable<CustomerId> _search(string searchQuery, string searchField = "")
+        private static IEnumerable<CustomerId> _search(string searchQuery)
         {
             // validation
             if (string.IsNullOrEmpty(searchQuery.Replace("*", "").Replace("?", ""))) return new List<CustomerId>();
@@ -45,10 +45,8 @@ namespace Lucene.NET.Services
                 var hits_limit = 1000;
                 var analyzer = new StandardAnalyzer(Version.LUCENE_29);
 
-                // search by single field
-                if (!string.IsNullOrEmpty(searchField))
                 {
-                    var parser = new QueryParser(Version.LUCENE_29, searchField, analyzer);
+                    var parser = new QueryParser(Version.LUCENE_29, "CustomerName", analyzer);
                     var query = parseQuery(searchQuery, parser);
                     var hits = searcher.Search(query, hits_limit).ScoreDocs;
                     var results = _mapLuceneToDataList(hits, searcher);
@@ -57,19 +55,7 @@ namespace Lucene.NET.Services
                     searcher.Dispose();
                     return results;
                 }
-                // search by multiple fields (ordered by RELEVANCE)
-                else
-                {
-                    var parser = new MultiFieldQueryParser
-                        (Version.LUCENE_29, new[] { "Id", "CustomerName" }, analyzer);
-                    var query = parseQuery(searchQuery, parser);
-                    var hits = searcher.Search(query, null, hits_limit, Sort.INDEXORDER).ScoreDocs;
-                    var results = _mapLuceneToDataList(hits, searcher);
-                    analyzer.Close();
-                    searcher.Close();
-                    searcher.Dispose();
-                    return results;
-                }
+                
             }
         }
         private static Query parseQuery(string searchQuery, QueryParser parser)
