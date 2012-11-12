@@ -20,7 +20,7 @@ namespace Lucene.NET.Services
         StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_29);
         IndexWriter writer;
         System.Timers.Timer flush = new System.Timers.Timer(2000);
-      
+        Int32 itemCount = 0;
         public static string _luceneDir =  @"..\..\Index";
         private static FSDirectory _directoryTemp;
         private static FSDirectory _directory
@@ -43,16 +43,21 @@ namespace Lucene.NET.Services
 
         void flush_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            lock (writer)
+            if (itemCount > 0)
             {
-                flush.Stop();
-                analyzer.Close();
-                writer.Close();
-                writer.Dispose();
-                analyzer = new StandardAnalyzer(Version.LUCENE_29);
-                writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
-        
-                flush.Start();
+                lock (writer)
+                {
+                    flush.Stop();
+                
+                    analyzer.Close();
+                    writer.Close();
+                    writer.Dispose();
+                    analyzer = new StandardAnalyzer(Version.LUCENE_29);
+                    writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+                    System.Threading.Interlocked.Exchange(ref itemCount, 0);
+               
+                    flush.Start();
+                }
             }
         }
         public void When(CustomerCreated e)
@@ -66,6 +71,7 @@ namespace Lucene.NET.Services
                 //writer.SetRAMBufferSizeMB(50);
                 lock (writer)
                 {
+                    System.Threading.Interlocked.Increment(ref itemCount);
                     _addToLuceneIndex(e, writer);
                 }
                 // close handles
