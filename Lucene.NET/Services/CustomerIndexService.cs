@@ -46,8 +46,29 @@ namespace Lucene.NET.Services
                 var analyzer = new StandardAnalyzer(Version.LUCENE_29);
 
                 {
-                    var parser = new QueryParser(Version.LUCENE_29, "CustomerName", analyzer);
-                    var query = parseQuery(searchQuery, parser);
+
+                    //var parser = new QueryParser(Version.LUCENE_29, "CustomerName", analyzer);
+                    //var query = parseQuery(searchQuery, parser);
+
+                    //var query = new BooleanQuery();
+                    //var names = searchQuery.Split(' ');
+                    //var firstName = new TermQuery(new Term("CustomerName", names[0]));
+                    //var lastName = new TermQuery(new Term("CusomterName", names[1]));
+                    //query.Add(firstName, BooleanClause.Occur.MUST);
+                    //query.Add(lastName, BooleanClause.Occur.MUST);
+
+                    //var pquery = new PhraseQuery();
+                    //pquery.Add(new Term("CustomerName", names[0]));
+                    //pquery.Add(new Term("CustomerName", names[1]));
+                    //var query = new BooleanQuery();
+                    //query.Add(pquery, BooleanClause.Occur.MUST);
+
+                    //query.Add(new Term("CustomerName",searchQuery.ToLowerInvariant()));
+
+                    var query = new TermQuery(new Term("CustomerName", searchQuery));
+                    
+
+
                     var hits = searcher.Search(query, hits_limit).ScoreDocs;
                     var results = _mapLuceneToDataList(hits, searcher);
                     analyzer.Close();
