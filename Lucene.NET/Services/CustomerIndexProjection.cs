@@ -80,10 +80,19 @@ namespace Lucene.NET.Services
                 //writer.Dispose();
             }
         }
+
         private static void _addToLuceneIndex(CustomerCreated e, IndexWriter writer)
         {
             // remove older index entry
-            var searchQuery = new TermQuery(new Term("CustomerName", e.CustomerName));
+            //var searchQuery = new TermQuery(new Term("CustomerName", e.CustomerName));
+
+            var searchQuery = new BooleanQuery();
+            var names = e.CustomerName.Split(' ');
+            var firstName = new TermQuery(new Term("CustomerName", names[0].ToLowerInvariant()));
+            var lastName = new TermQuery(new Term("CusomterName", names[1].ToLowerInvariant()));
+            searchQuery.Add(firstName, BooleanClause.Occur.SHOULD);
+            searchQuery.Add(lastName, BooleanClause.Occur.SHOULD);
+
             writer.DeleteDocuments(searchQuery);
 
             // add new index entry
