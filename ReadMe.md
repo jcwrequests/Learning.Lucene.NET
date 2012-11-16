@@ -4,3 +4,4 @@ Resources:
 
 http://darksleep.com/lucene/
 http://stackoverflow.com/questions/468405/how-to-incorporate-multiple-fields-in-queryparser
+http://www.codeproject.com/Articles/32175/Lucene-Net-Text-Analysis

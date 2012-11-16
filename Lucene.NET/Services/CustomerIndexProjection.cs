@@ -12,12 +12,14 @@ using LuceneSearch.Model;
 using Version = Lucene.Net.Util.Version;
 using Lucene.NET.Contracts;
 using System.IO;
+using Lucene.Net.Analysis;
 
 namespace Lucene.NET.Services
 {
     public class CustomerIndexProjection
     {
-        StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_29);
+ 
+        KeywordAnalyzer analyzer = new KeywordAnalyzer();
         IndexWriter writer;
         System.Timers.Timer flush = new System.Timers.Timer(2000);
         Int32 itemCount = 0;
@@ -52,7 +54,7 @@ namespace Lucene.NET.Services
                     analyzer.Close();
                     writer.Close();
                     writer.Dispose();
-                    analyzer = new StandardAnalyzer(Version.LUCENE_29);
+                    analyzer = new KeywordAnalyzer();
                     writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
                     System.Threading.Interlocked.Exchange(ref itemCount, 0);
                
@@ -84,14 +86,7 @@ namespace Lucene.NET.Services
         private static void _addToLuceneIndex(CustomerCreated e, IndexWriter writer)
         {
             // remove older index entry
-            //var searchQuery = new TermQuery(new Term("CustomerName", e.CustomerName));
-
-            var searchQuery = new BooleanQuery();
-            var names = e.CustomerName.Split(' ');
-            var firstName = new TermQuery(new Term("CustomerName", names[0].ToLowerInvariant()));
-            var lastName = new TermQuery(new Term("CusomterName", names[1].ToLowerInvariant()));
-            searchQuery.Add(firstName, BooleanClause.Occur.SHOULD);
-            searchQuery.Add(lastName, BooleanClause.Occur.SHOULD);
+            var searchQuery = new TermQuery(new Term("CustomerName", e.CustomerName));
 
             writer.DeleteDocuments(searchQuery);
 
