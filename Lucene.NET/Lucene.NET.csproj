@@ -35,6 +35,9 @@
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
+    <Reference Include="Lokad.Cqrs.Portable">
+      <HintPath>..\..\..\..\Visual Studio 2012\Downloads\LokadDDDSample\Libraries\Lokad.Cqrs.Portable.dll</HintPath>
+    </Reference>
     <Reference Include="Lucene.Net">
       <HintPath>..\packages\Lucene.Net.2.9.4.1\lib\net40\Lucene.Net.dll</HintPath>
     </Reference>
@@ -59,6 +62,9 @@
     <Compile Include="SampleData.cs" />
     <Compile Include="SelectedList.cs" />
     <Compile Include="Services\CustomerIndexService.cs" />
+    <Compile Include="Storage\ISerializationStrategy.cs" />
+    <Compile Include="Storage\LucenceStore.cs" />
+    <Compile Include="Storage\LucenStrategy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
