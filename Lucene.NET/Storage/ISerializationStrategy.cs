@@ -11,5 +11,6 @@ namespace Lucene.NET.Storage
         void Serialize<TEntity>(TEntity entity, Stream stream);
         TEntity Deserialize<TEntity>(Stream stream);
         string GetEntityLocationPath<TEntity>(object key);
+        string GetEntityBucket<TEntity>();
     }
 }

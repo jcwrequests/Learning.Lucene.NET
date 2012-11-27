@@ -25,7 +25,7 @@ namespace Lucene.NET.Storage
                             ISerializationStrategy strategy,
                             string indexPath)
         {
-            _folder = directoryPath;
+            _folder = Path.Combine(directoryPath, strategy.GetEntityBucket<TEntity>()); 
             _strategy = strategy;
             _indexPath = indexPath;
             HyperTypeDescriptionProvider.Add(typeof(TKey));
@@ -42,9 +42,7 @@ namespace Lucene.NET.Storage
             try
             {
                 var name = GetFileName(key);
-                //need implement lucene handling hear
-
-
+               
                 if (!File.Exists(name))
                     return false;
 
@@ -67,33 +65,22 @@ namespace Lucene.NET.Storage
             }
         }
 
-        string GetName(TKey key)
+        string GetName()
         {
-            //key will be guid
-            return Path.Combine(_folder, _strategy.GetEntityLocationPath<TEntity>(key));
+            return Path.Combine(_folder, _strategy.GetEntityLocationPath<TEntity>(null));
         }
-
-        
 
         string GetFileName(TKey key)
         {
+            //check cache first then goto the lucene index
+            //need to create cache which will be a dictionary
             using (var searcher = new IndexSearcher(_indexPath, false))
             {
                 var hits_limit = 1000;
                 var analyzer = new StandardAnalyzer(Version.LUCENE_29);
 
                 {
-                    var query = new BooleanQuery();
-                    PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(key);
-
-                    foreach (PropertyDescriptor property in properties)
-                    {
-
-                        var value = property.GetValue(key).ToString();
-                        var name = property.Name;
-                        query.Add(new TermQuery(new Term(property.Name, property.GetValue(key).ToString())), BooleanClause.Occur.MUST);
-                    }
-                   
+                    var query = CreateQuery(key);
 
                     var hits = searcher.Search(query, hits_limit).ScoreDocs;
                     var results = _mapLuceneToDataList(hits, searcher);
@@ -102,12 +89,27 @@ namespace Lucene.NET.Storage
                     searcher.Close();
                     searcher.Dispose();
 
-                    //if null the return default file namimg convention
                     return results.FirstOrDefault();
                 }
 
             }
 
+        }
+
+        private static BooleanQuery CreateQuery(TKey key)
+        {
+            var query = new BooleanQuery();
+            PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(key);
+
+            foreach (PropertyDescriptor property in properties)
+            {
+
+                var value = property.GetValue(key).ToString();
+                var name = property.Name;
+                query.Add(new TermQuery(new Term(property.Name, property.GetValue(key).ToString())), BooleanClause.Occur.MUST);
+            }
+
+            return query;
         }
 
         private static IEnumerable<string> _mapLuceneToDataList(IEnumerable<ScoreDoc> hits, IndexSearcher searcher)
@@ -126,7 +128,8 @@ namespace Lucene.NET.Storage
             AddOrUpdateHint hint)
         {
             var name = GetFileName(key);
-            //need implement lucene handling hear
+            bool isNew = (name == null);
+            if (name == null) name = GetName();
 
             try
             {
@@ -175,7 +178,7 @@ namespace Lucene.NET.Storage
                             file.SetLength(data.Length);
                         }
                     }
-
+                    if (isNew) StoreResultInIndex(key, name);
                     return result;
                 }
             }
@@ -188,18 +191,45 @@ namespace Lucene.NET.Storage
             }
         }
 
+       
+
         public bool TryDelete(TKey key)
         {
-            var name = GetName(key);
-            //need implement lucene handling hear
-
-
+            var name = GetFileName(key);
+            
             if (File.Exists(name))
             {
                 File.Delete(name);
+                RemoveFromIndex(key);
                 return true;
             }
             return false;
+        }
+  
+
+        private void RemoveFromIndex(TKey key)
+        {
+            var searchQuery = CreateQuery(key);
+            writer.DeleteDocuments(searchQuery);
+        }
+        private void StoreResultInIndex(TKey key, string entityPath)
+        {
+            //could cache the data into a temporary hash table
+            //then I can flush the writes every two seconds
+            //or as needed
+
+            var doc = new Document();
+            PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(key);
+
+            foreach (PropertyDescriptor property in properties)
+            {
+
+                var value = property.GetValue(key).ToString();
+                var name = property.Name;
+                doc.Add(new Field(name, value, Field.Store.YES, Field.Index.ANALYZED));
+            }
+            doc.Add(new Field("documentPath", entityPath, Field.Store.YES, Field.Index.ANALYZED));
+            writer.AddDocument(doc);
         }
        
     }
