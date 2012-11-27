@@ -6,7 +6,7 @@ using Lokad.Cqrs.AtomicStorage;
 
 namespace Lucene.NET.Storage
 {
-    public class LucenStrategy : IDocumentStrategy
+    public class LuceneStrategy : IDocumentStrategy
     {
         public TEntity Deserialize<TEntity>(System.IO.Stream stream)
         {

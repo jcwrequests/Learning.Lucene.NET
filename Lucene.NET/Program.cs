@@ -18,25 +18,25 @@ namespace Lucene.NET
 
             //var r = GoLucene.GetAllIndexRecords();
 
-            Contracts.CustomerCreated e = new Contracts.CustomerCreated(new Contracts.CustomerId(1), "Rinat Abdullin");
-            Contracts.CustomerCreated e2 = new Contracts.CustomerCreated(new Contracts.CustomerId(2), "Pumpkin Jones");
-            CustomerIndexProjection projection = new CustomerIndexProjection();
-            projection.When(e);
-            projection.When(e2);
+            //Contracts.CustomerCreated e = new Contracts.CustomerCreated(new Contracts.CustomerId(1), "Rinat Abdullin");
+            //Contracts.CustomerCreated e2 = new Contracts.CustomerCreated(new Contracts.CustomerId(2), "Pumpkin Jones");
+            //CustomerIndexProjection projection = new CustomerIndexProjection();
+            //projection.When(e);
+            //projection.When(e2);
 
-            string[] firstNames = { "John", "Jason", "Eric", "Eva", "Keegan", "Sophie", "Pumpkin2" };
-            string[] lastNames = { "Smith", "Jones", "Johnson", "Kirk", "Simpson", "Kahn", "Jobs" };
-            Random randomizer = new Random();
-            for (int i = 1; i <= 10000; i++)
-            {
-                int firstName = randomizer.Next(7);
-                int lastName = randomizer.Next(7);
-                Contracts.CustomerCreated randomEvent = new Contracts.
-                                                            CustomerCreated(new Contracts.CustomerId(i + 1),
-                                                            string.Format("{0} {1}", firstNames[firstName], lastNames[lastName]));
-                projection.When(randomEvent);
+            //string[] firstNames = { "John", "Jason", "Eric", "Eva", "Keegan", "Sophie", "Pumpkin2" };
+            //string[] lastNames = { "Smith", "Jones", "Johnson", "Kirk", "Simpson", "Kahn", "Jobs" };
+            //Random randomizer = new Random();
+            //for (int i = 1; i <= 10000; i++)
+            //{
+            //    int firstName = randomizer.Next(7);
+            //    int lastName = randomizer.Next(7);
+            //    Contracts.CustomerCreated randomEvent = new Contracts.
+            //                                                CustomerCreated(new Contracts.CustomerId(i + 1),
+            //                                                string.Format("{0} {1}", firstNames[firstName], lastNames[lastName]));
+            //    projection.When(randomEvent);
 
-            }
+            //}
 
 
             System.Diagnostics.Debugger.Break();

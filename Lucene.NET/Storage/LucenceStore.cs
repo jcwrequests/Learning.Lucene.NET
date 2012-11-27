@@ -4,19 +4,31 @@ using System.Linq;
 using System.Text;
 using Lokad.Cqrs.AtomicStorage;
 using System.IO;
+using Hyper.ComponentModel;
+using System.ComponentModel;
+using Lucene.Net.Search;
+using Lucene.Net.Index;
+using Lucene.Net.Analysis.Standard;
+using Version = Lucene.Net.Util.Version;
+using Lucene.Net.Documents;
 
 namespace Lucene.NET.Storage
 {
     public class LucenceStore<TKey, TEntity> : IDocumentReader<TKey, TEntity>,
-                                                IDocumentWriter<TKey, TEntity>
+                                               IDocumentWriter<TKey, TEntity>
      {
         readonly string _folder;
         readonly ISerializationStrategy _strategy;
+        readonly string _indexPath;
 
-        public LucenceStore(string directoryPath, ISerializationStrategy strategy)
+        public LucenceStore(string directoryPath, 
+                            ISerializationStrategy strategy,
+                            string indexPath)
         {
             _folder = directoryPath;
             _strategy = strategy;
+            _indexPath = indexPath;
+            HyperTypeDescriptionProvider.Add(typeof(TKey));
         }
 
         public void InitIfNeeded()
@@ -29,7 +41,7 @@ namespace Lucene.NET.Storage
             view = default(TEntity);
             try
             {
-                var name = GetName(key);
+                var name = GetFileName(key);
                 //need implement lucene handling hear
 
 
@@ -57,27 +69,63 @@ namespace Lucene.NET.Storage
 
         string GetName(TKey key)
         {
-            var properties = typeof(TKey).GetProperties(System.Reflection.BindingFlags.Public);
-            //cache propert types
-            foreach (var property in properties)
-            {
-                var value = property.GetValue(key, null);
-                //need the value and the property name
-                //those values get past to the lucene writer
-                //thes should probably change from get name to
-                //get key value
-            }
+            //key will be guid
             return Path.Combine(_folder, _strategy.GetEntityLocationPath<TEntity>(key));
         }
-        string GetFileName(Guid id)
+
+        
+
+        string GetFileName(TKey key)
         {
-            
-            
+            using (var searcher = new IndexSearcher(_indexPath, false))
+            {
+                var hits_limit = 1000;
+                var analyzer = new StandardAnalyzer(Version.LUCENE_29);
+
+                {
+                    var query = new BooleanQuery();
+                    PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(key);
+
+                    foreach (PropertyDescriptor property in properties)
+                    {
+
+                        var value = property.GetValue(key).ToString();
+                        var name = property.Name;
+                        query.Add(new TermQuery(new Term(property.Name, property.GetValue(key).ToString())), BooleanClause.Occur.MUST);
+                    }
+                   
+
+                    var hits = searcher.Search(query, hits_limit).ScoreDocs;
+                    var results = _mapLuceneToDataList(hits, searcher);
+
+                    analyzer.Close();
+                    searcher.Close();
+                    searcher.Dispose();
+
+                    //if null the return default file namimg convention
+                    return results.FirstOrDefault();
+                }
+
+            }
+
         }
+
+        private static IEnumerable<string> _mapLuceneToDataList(IEnumerable<ScoreDoc> hits, IndexSearcher searcher)
+        {
+            return hits.Select(hit => _mapLuceneDocumentToData(searcher.Doc(hit.doc)));
+        }
+
+        private static string _mapLuceneDocumentToData(Document doc)
+        {
+            return doc.Get("documentPath");
+
+        }
+
+
         public TEntity AddOrUpdate(TKey key, Func<TEntity> addFactory, Func<TEntity, TEntity> update,
             AddOrUpdateHint hint)
         {
-            var name = GetName(key);
+            var name = GetFileName(key);
             //need implement lucene handling hear
 
             try

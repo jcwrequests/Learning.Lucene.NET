@@ -43,7 +43,10 @@ namespace Lucene.NET.Services
                 var analyzer = new StandardAnalyzer(Version.LUCENE_29);
 
                 {
-                    var query = new TermQuery(new Term("CustomerName", searchQuery));
+                    //var query = new TermQuery(new Term("CustomerName", searchQuery));
+                    var query = new BooleanQuery();
+                    query.Add(new TermQuery(new Term("CustomerName", searchQuery)), BooleanClause.Occur.MUST);
+
                     var hits = searcher.Search(query, hits_limit).ScoreDocs;
                     var results = _mapLuceneToDataList(hits, searcher);
 
