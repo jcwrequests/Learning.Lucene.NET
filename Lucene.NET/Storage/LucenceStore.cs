@@ -11,6 +11,8 @@ using Lucene.Net.Index;
 using Lucene.Net.Analysis.Standard;
 using Version = Lucene.Net.Util.Version;
 using Lucene.Net.Documents;
+using Lucene.Net.Store;
+using Lucene.Net.Analysis;
 
 namespace Lucene.NET.Storage
 {
@@ -20,20 +22,29 @@ namespace Lucene.NET.Storage
         readonly string _folder;
         readonly ISerializationStrategy _strategy;
         readonly string _indexPath;
+        private FSDirectory _directory;
+        IndexWriter writer;
+        KeywordAnalyzer analyzer = new KeywordAnalyzer();
 
         public LucenceStore(string directoryPath, 
                             ISerializationStrategy strategy,
-                            string indexPath)
+                            string luceneDir)
         {
             _folder = Path.Combine(directoryPath, strategy.GetEntityBucket<TEntity>()); 
             _strategy = strategy;
-            _indexPath = indexPath;
+            _indexPath = luceneDir;
+
             HyperTypeDescriptionProvider.Add(typeof(TKey));
+            _directory = FSDirectory.Open(new DirectoryInfo(luceneDir));
+            if (IndexWriter.IsLocked(_directory)) IndexWriter.Unlock(_directory);
+            var lockFilePath = Path.Combine(luceneDir, "write.lock");
+            if (File.Exists(lockFilePath)) File.Delete(lockFilePath);
+            writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
         }
 
         public void InitIfNeeded()
         {
-            Directory.CreateDirectory(_folder);
+            System.IO.Directory.CreateDirectory(_folder);
         }
 
         public bool TryGet(TKey key, out TEntity view)
@@ -74,7 +85,9 @@ namespace Lucene.NET.Storage
         {
             //check cache first then goto the lucene index
             //need to create cache which will be a dictionary
-            using (var searcher = new IndexSearcher(_indexPath, false))
+            //using (var searcher = new IndexSearcher(_indexPath, false))
+            var reader = IndexReader.Open(_directory, false);
+            using (var searcher = new IndexSearcher(reader))
             {
                 var hits_limit = 1000;
                 var analyzer = new StandardAnalyzer(Version.LUCENE_29);
@@ -137,8 +150,8 @@ namespace Lucene.NET.Storage
                 // to avoid NTFS performance degradation (when there are more than 
                 // 10000 files per folder). Kudos to Gabriel Schenker for pointing this out
                 var subfolder = Path.GetDirectoryName(name);
-                if (subfolder != null && !Directory.Exists(subfolder))
-                    Directory.CreateDirectory(subfolder);
+                if (subfolder != null && !System.IO.Directory.Exists(subfolder))
+                    System.IO.Directory.CreateDirectory(subfolder);
  
 
                 // we are locking this file.
@@ -208,7 +221,7 @@ namespace Lucene.NET.Storage
   
 
         private void RemoveFromIndex(TKey key)
-        {
+        {  
             var searchQuery = CreateQuery(key);
             writer.DeleteDocuments(searchQuery);
         }
