@@ -17,8 +17,9 @@ using Lucene.Net.Analysis;
 namespace Lucene.NET.Storage
 {
     public class LucenceStore<TKey, TEntity> : IDocumentReader<TKey, TEntity>,
-                                               IDocumentWriter<TKey, TEntity>
-     {
+                                               IDocumentWriter<TKey, TEntity>, 
+                                               IDisposable
+     {  
         readonly string _folder;
         readonly ISerializationStrategy _strategy;
         readonly string _indexPath;
@@ -39,7 +40,8 @@ namespace Lucene.NET.Storage
             if (IndexWriter.IsLocked(_directory)) IndexWriter.Unlock(_directory);
             var lockFilePath = Path.Combine(luceneDir, "write.lock");
             if (File.Exists(lockFilePath)) File.Delete(lockFilePath);
-            writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+            var policy = new SnapshotDeletionPolicy(new KeepOnlyLastCommitDeletionPolicy());
+            writer = new IndexWriter(_directory, analyzer, policy, IndexWriter.MaxFieldLength.UNLIMITED);
         }
 
         public void InitIfNeeded()
@@ -224,6 +226,7 @@ namespace Lucene.NET.Storage
         {  
             var searchQuery = CreateQuery(key);
             writer.DeleteDocuments(searchQuery);
+            writer.Flush();
         }
         private void StoreResultInIndex(TKey key, string entityPath)
         {
@@ -243,7 +246,15 @@ namespace Lucene.NET.Storage
             }
             doc.Add(new Field("documentPath", entityPath, Field.Store.YES, Field.Index.ANALYZED));
             writer.AddDocument(doc);
+            writer.Flush();
         }
-       
-    }
+
+
+        public void Dispose()
+        {
+            analyzer.Close();
+            writer.Close();
+            writer.Dispose();
+        }
+     }
 }

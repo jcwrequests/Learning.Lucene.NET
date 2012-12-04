@@ -51,7 +51,7 @@ namespace Lucene.NET.Services
                 {
                     flush.Stop();
                 
-                    analyzer.Close();
+                     
                     writer.Close();
                     writer.Dispose();
                     analyzer = new KeywordAnalyzer();
