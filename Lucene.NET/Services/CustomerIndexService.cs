@@ -45,13 +45,11 @@ namespace Lucene.NET.Services
                 {
                     //var query = new TermQuery(new Term("CustomerName", searchQuery));
                     var query = new BooleanQuery();
-                    query.Add(new TermQuery(new Term("CustomerName", searchQuery)), BooleanClause.Occur.MUST);
-
+                    query.Add(new TermQuery(new Term("CustomerName", searchQuery)), Occur.MUST);
                     var hits = searcher.Search(query, hits_limit).ScoreDocs;
                     var results = _mapLuceneToDataList(hits, searcher);
 
                     analyzer.Close();
-                    searcher.Close();
                     searcher.Dispose();
                     return results;
                 }
@@ -62,7 +60,7 @@ namespace Lucene.NET.Services
         
         private static IEnumerable<CustomerId> _mapLuceneToDataList(IEnumerable<ScoreDoc> hits, IndexSearcher searcher)
         {
-            return hits.Select(hit => _mapLuceneDocumentToData(searcher.Doc(hit.doc))).ToList();
+            return hits.Select(hit => _mapLuceneDocumentToData(searcher.Doc(hit.Doc))).ToList();
         }
 
         private static CustomerId _mapLuceneDocumentToData(Document doc)

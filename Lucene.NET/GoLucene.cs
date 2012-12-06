@@ -30,22 +30,24 @@ namespace LuceneSearch.Service {
 		
 
 		// search methods
-		public static IEnumerable<SampleData> GetAllIndexRecords() {
-			// validate search index
-			if (!System.IO.Directory.EnumerateFiles(_luceneDir).Any()) return new List<SampleData>();
+        //public static IEnumerable<SampleData> GetAllIndexRecords() {
+        //    // validate search index
+        //    if (!System.IO.Directory.EnumerateFiles(_luceneDir).Any()) return new List<SampleData>();
 
-			// set up lucene searcher
-			var searcher = new IndexSearcher(_directory, false);
-			var reader = IndexReader.Open(_directory, false);
-			var docs = new List<Document>();
-			var term = reader.TermDocs();
-			while (term.Next()) docs.Add(searcher.Doc(term.Doc()));
-			reader.Close();
-			reader.Dispose();
-			searcher.Close();
-			searcher.Dispose();
-			return _mapLuceneToDataList(docs);
-		}
+        //    // set up lucene searcher
+        //    var searcher = new IndexSearcher(_directory, false);
+        //    var reader = IndexReader.Open(_directory, false);
+        //    var docs = new List<Document>();
+        //    var term = reader.TermDocs();
+        //    while (term.Next()) docs.Add(searcher.Doc(term.Doc()));
+            
+        //    reader.Dispose();
+        //    reader.Dispose();
+        //    searcher.Dispose();
+        //    searcher.Dispose();
+        //    return _mapLuceneToDataList(docs);
+        //}
+
 		public static IEnumerable<SampleData> Search(string input, string fieldName = "") {
 			if (string.IsNullOrEmpty(input)) return new List<SampleData>();
 			
@@ -77,7 +79,6 @@ namespace LuceneSearch.Service {
 					var hits = searcher.Search(query, hits_limit).ScoreDocs;
 					var results = _mapLuceneToDataList(hits, searcher);
 					analyzer.Close();
-					searcher.Close();
 					searcher.Dispose();
 					return results;
 				}
@@ -89,7 +90,6 @@ namespace LuceneSearch.Service {
 					var hits = searcher.Search(query, null, hits_limit, Sort.INDEXORDER).ScoreDocs;
 					var results = _mapLuceneToDataList(hits, searcher);
 					analyzer.Close();
-					searcher.Close();
 					searcher.Dispose();
 					return results;
 				}
@@ -112,7 +112,7 @@ namespace LuceneSearch.Service {
 			return hits.Select(_mapLuceneDocumentToData).ToList();
 		}
 		private static IEnumerable<SampleData> _mapLuceneToDataList(IEnumerable<ScoreDoc> hits, IndexSearcher searcher) {
-			return hits.Select(hit => _mapLuceneDocumentToData(searcher.Doc(hit.doc))).ToList();
+			return hits.Select(hit => _mapLuceneDocumentToData(searcher.Doc(hit.Doc))).ToList();
 		}
 		private static SampleData _mapLuceneDocumentToData(Document doc) {
 			return new SampleData {
@@ -136,7 +136,6 @@ namespace LuceneSearch.Service {
 
 				// close handles
 				analyzer.Close();
-				writer.Close();
 				writer.Dispose();
 			}
 		}
@@ -150,7 +149,6 @@ namespace LuceneSearch.Service {
 
 				// close handles
 				analyzer.Close();
-				writer.Close();
 				writer.Dispose();
 			}
 		}
@@ -163,7 +161,6 @@ namespace LuceneSearch.Service {
 
 					// close handles
 					analyzer.Close();
-					writer.Close();
 					writer.Dispose();
 				}
 			}
@@ -177,7 +174,6 @@ namespace LuceneSearch.Service {
 			using (var writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED)) {
 				analyzer.Close();
 				writer.Optimize();
-				writer.Close();
 				writer.Dispose();
 			}
 		}

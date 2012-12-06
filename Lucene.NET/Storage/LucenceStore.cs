@@ -21,14 +21,14 @@ namespace Lucene.NET.Storage
                                                IDisposable
      {  
         readonly string _folder;
-        readonly ISerializationStrategy _strategy;
+        readonly IDocumentStrategy _strategy;
         readonly string _indexPath;
         private FSDirectory _directory;
         IndexWriter writer;
         KeywordAnalyzer analyzer = new KeywordAnalyzer();
 
-        public LucenceStore(string directoryPath, 
-                            ISerializationStrategy strategy,
+        public LucenceStore(string directoryPath,
+                            IDocumentStrategy strategy,
                             string luceneDir)
         {
             _folder = Path.Combine(directoryPath, strategy.GetEntityBucket<TEntity>()); 
@@ -80,7 +80,7 @@ namespace Lucene.NET.Storage
 
         string GetName()
         {
-            return Path.Combine(_folder, _strategy.GetEntityLocationPath<TEntity>(null));
+            return Path.Combine(_folder, _strategy.GetEntityLocation<TEntity>(null));
         }
 
         string GetFileName(TKey key)
@@ -101,7 +101,6 @@ namespace Lucene.NET.Storage
                     var results = _mapLuceneToDataList(hits, searcher);
 
                     analyzer.Close();
-                    searcher.Close();
                     searcher.Dispose();
 
                     return results.FirstOrDefault();
@@ -121,7 +120,7 @@ namespace Lucene.NET.Storage
 
                 var value = property.GetValue(key).ToString();
                 var name = property.Name;
-                query.Add(new TermQuery(new Term(property.Name, property.GetValue(key).ToString())), BooleanClause.Occur.MUST);
+                query.Add(new TermQuery(new Term(property.Name, property.GetValue(key).ToString())), Occur.MUST);
             }
 
             return query;
@@ -129,7 +128,7 @@ namespace Lucene.NET.Storage
 
         private static IEnumerable<string> _mapLuceneToDataList(IEnumerable<ScoreDoc> hits, IndexSearcher searcher)
         {
-            return hits.Select(hit => _mapLuceneDocumentToData(searcher.Doc(hit.doc)));
+            return hits.Select(hit => _mapLuceneDocumentToData(searcher.Doc(hit.Doc)));
         }
 
         private static string _mapLuceneDocumentToData(Document doc)
@@ -226,7 +225,7 @@ namespace Lucene.NET.Storage
         {  
             var searchQuery = CreateQuery(key);
             writer.DeleteDocuments(searchQuery);
-            writer.Flush();
+            writer.Commit();
         }
         private void StoreResultInIndex(TKey key, string entityPath)
         {
@@ -246,14 +245,13 @@ namespace Lucene.NET.Storage
             }
             doc.Add(new Field("documentPath", entityPath, Field.Store.YES, Field.Index.ANALYZED));
             writer.AddDocument(doc);
-            writer.Flush();
+            writer.Commit();
         }
 
 
         public void Dispose()
         {
             analyzer.Close();
-            writer.Close();
             writer.Dispose();
         }
      }

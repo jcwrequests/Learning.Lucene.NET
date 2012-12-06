@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Lucene.NET</RootNamespace>
-    <AssemblyName>Lucene.NET</AssemblyName>
+    <AssemblyName>MyLucene.NET</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -42,8 +42,9 @@
     <Reference Include="Lokad.Cqrs.Portable">
       <HintPath>..\..\..\..\Visual Studio 2012\Downloads\LokadDDDSample\Libraries\Lokad.Cqrs.Portable.dll</HintPath>
     </Reference>
-    <Reference Include="Lucene.Net">
-      <HintPath>..\packages\Lucene.Net.2.9.4.1\lib\net40\Lucene.Net.dll</HintPath>
+    <Reference Include="Lucene.Net, Version=3.0.3.0, Culture=neutral, PublicKeyToken=85089178b9ac3181, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Lucene.Net.3.0.3\lib\NET40\Lucene.Net.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\..\..\..\Visual Studio 2012\Downloads\LokadDDDSample\Libraries\ProtoBuf-net\protobuf-net.dll</HintPath>

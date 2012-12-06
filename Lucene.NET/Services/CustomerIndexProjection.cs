@@ -51,8 +51,7 @@ namespace Lucene.NET.Services
                 {
                     flush.Stop();
                 
-                     
-                    writer.Close();
+              
                     writer.Dispose();
                     analyzer = new KeywordAnalyzer();
                     writer = new IndexWriter(_directory, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
