@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Lucene.NET;
 using System.Runtime.Serialization;
+using System.Diagnostics;
 
 namespace Lucene.NET.Testing
 {
@@ -71,8 +72,46 @@ namespace Lucene.NET.Testing
 
             store.Dispose();
         }
+        [TestMethod]
+        public void store_an_entity_retrieve_it_from_store_perf_test()
+        {
+            var strategy = new Storage.LuceneStrategy();
+
+            var store = new Storage.LucenceStore<Key, Entity>(entityStorage, strategy, index);
+            var key = new Key("test", DateTime.Parse("01/01/2012"));
+
+            store.AddOrUpdate(key,
+                               () => new Entity(10, 10),
+                               (e) => e,
+                               Lokad.Cqrs.AtomicStorage.AddOrUpdateHint.ProbablyExists);
+            Entity entity;
+
+            Assert.IsTrue(store.TryGet(key, out entity));
+
+            Assert.IsTrue(entity.ItemCount == 10);
+            Assert.IsTrue(entity.TotalAmount == 10);
+
+            System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
+            for (int _index = 1; _index <= 1000; _index++)
+            {
+                entity = null;
+                stopWatch.Start();
+                
+                store.TryGet(key, out entity);
+                stopWatch.Stop();
+                Debug.WriteLine(stopWatch.Elapsed.ToString());
+                Debug.WriteLine(entity.ToString());
+               stopWatch.Reset();
+            }
+
+            store.Dispose();
+        }
     }
-    
+   
+
+
+
+
 
     public class Key
     {
@@ -101,7 +140,10 @@ namespace Lucene.NET.Testing
         public int ItemCount { get; private set; }
         [DataMember(Order = 2)]
         public decimal TotalAmount { get; private set; }
-
+        public override string ToString()
+        {
+            return string.Format("{0} - {1}", this.ItemCount.ToString(), this.TotalAmount.ToString());
+        }
 
     }
 }
